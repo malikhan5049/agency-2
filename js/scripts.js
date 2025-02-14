@@ -52,3 +52,73 @@ window.addEventListener('DOMContentLoaded', event => {
     });
 
 });
+
+function onContactFormSubmit(event) {
+    event.preventDefault();
+    console.log("form submission - init")
+
+    var email = document.getElementById('email').value;
+    var message = document.getElementById('message').value;
+
+    var data = {
+        to: 'info@itkanrepairs.com',
+        from: email,
+        subject: 'New Contact Form Submission',
+        text: message
+    };
+
+    fetch('https://email.us-east-1.amazonaws.com', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Amz-Content-Sha256': 'UNSIGNED-PAYLOAD',
+            'X-Amz-Date': new Date().toISOString().replace(/[:-]|\.\d{3}/g, ''),
+            'Authorization': 'AWS4-HMAC-SHA256 Credential=YOUR_AWS_ACCESS_KEY/20211015/us-east-1/ses/aws4_request, SignedHeaders=content-type;host;x-amz-date, Signature=YOUR_SIGNATURE'
+        },
+        body: JSON.stringify({
+            Action: 'SendEmail',
+            Source: email,
+            Destination: {
+                ToAddresses: ['info@itkanrepairs.com']
+            },
+            Message: {
+                Subject: {
+                    Data: 'New Contact Form Submission'
+                },
+                Body: {
+                    Text: {
+                        Data: message
+                    }
+                }
+            }
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.MessageId) {
+                document.getElementById('submitSuccessMessage').classList.remove('d-none');
+                document.getElementById('contactForm').reset();
+            } else {
+                document.getElementById('submitErrorMessage').classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            document.getElementById('submitErrorMessage').classList.remove('d-none');
+        });
+}
+
+function checkMessage() {
+    const messageInput = document.getElementById('message');
+    const submitButton = document.getElementById('submitButton');
+
+    messageInput.addEventListener('input', () => {
+        if (messageInput.value.length > 0) {
+            submitButton.classList.remove('disabled');
+        } else {
+            submitButton.classList.add('disabled');
+        }
+    });
+}
+
+// Initialize the checkMessage function
+checkMessage();
